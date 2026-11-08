@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: quota-guard
+  namespace: quota-guard-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: quota-guard
+rules:
+  - apiGroups: ["guard.ankaita.dev"]
+    resources: ["resourcebudgets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: ["guard.ankaita.dev"]
+    resources: ["resourcebudgets/status"]
+    verbs: ["get", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: quota-guard
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: quota-guard
+subjects:
+  - kind: ServiceAccount
+    name: quota-guard
+    namespace: quota-guard-system

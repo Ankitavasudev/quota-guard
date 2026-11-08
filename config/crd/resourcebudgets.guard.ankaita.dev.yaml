@@ -1,0 +1,76 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: resourcebudgets.guard.ankaita.dev
+spec:
+  group: guard.ankaita.dev
+  scope: Namespaced
+  names:
+    plural: resourcebudgets
+    singular: resourcebudget
+    kind: ResourceBudget
+    shortNames:
+      - rb
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: CPU used
+          type: string
+          jsonPath: .status.observedCpu
+        - name: Memory used
+          type: string
+          jsonPath: .status.observedMemory
+        - name: Pods
+          type: integer
+          jsonPath: .status.pods
+        - name: Within budget
+          type: boolean
+          jsonPath: .status.withinBudget
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [cpu, memory]
+              properties:
+                cpu:
+                  type: string
+                  description: Aggregate CPU request capacity for the namespace, e.g. "4" or "500m".
+                memory:
+                  type: string
+                  description: Aggregate memory request capacity for the namespace, e.g. "8Gi".
+            status:
+              type: object
+              properties:
+                observedCpu:
+                  type: string
+                observedMemory:
+                  type: string
+                withinBudget:
+                  type: boolean
+                pods:
+                  type: integer
+                conditions:
+                  type: array
+                  items:
+                    type: object
+                    required: [type, status, reason]
+                    properties:
+                      type: string
+                      status: string
+                      reason: string
+                      message: string
+                      lastTransitionTime: string
+                      observedGeneration: integer
+                lastCalculated:
+                  type: string
+                  format: date-time

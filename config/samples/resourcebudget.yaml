@@ -1,0 +1,7 @@
+apiVersion: guard.ankaita.dev/v1alpha1
+kind: ResourceBudget
+metadata:
+  name: main
+spec:
+  cpu: "1500m"
+  memory: "2Gi"
