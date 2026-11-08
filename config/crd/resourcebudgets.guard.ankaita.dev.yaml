@@ -65,12 +65,18 @@ spec:
                     type: object
                     required: [type, status, reason]
                     properties:
-                      type: string
-                      status: string
-                      reason: string
-                      message: string
-                      lastTransitionTime: string
-                      observedGeneration: integer
+                      type:
+                        type: string
+                      status:
+                        type: string
+                      reason:
+                        type: string
+                      message:
+                        type: string
+                      lastTransitionTime:
+                        type: string
+                      observedGeneration:
+                        type: integer
                 lastCalculated:
                   type: string
                   format: date-time
