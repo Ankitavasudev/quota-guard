@@ -105,6 +105,16 @@ make build
 
 Tests use `controller-runtime/pkg/client/fake`; they cover within/over budget, cross-namespace isolation, succeeded-pod exclusion, missing-budget no-op, and condition wiring.
 
+### Live demo on a real local control plane
+
+```bash
+go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+setup-envtest use 1.30.x --bin-dir ./envtest
+KUBEBUILDER_ASSETS=./envtest/k8s/1.30.3-<suite>-<arch> go run ./cmd/envtest-demo
+```
+
+It installs the CRD, creates a namespace with a 1-core budget, spins up two pods that overrun it, prints the `OverBudget` status + Event, deletes a pod, and prints the flip back to `WithinBudget`.
+
 ## What this demonstrates
 
 - Writing a real Kubernetes operator: CRD schema, status subresource, reconcile loop, events, metrics
