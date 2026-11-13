@@ -128,6 +128,24 @@ It installs the CRD, creates a namespace with a 1-core budget, spins up two pods
 - [ ] `--enforce=webhook` mode with cert-manager wiring
 - [ ] Gatekeeper constraint templates equivalent
 
+## Demo
+
+Run the bundled end-to-end demo against a real local control plane:
+
+```bash
+go install sigs.k8s.io/controller-runtime/tools/setup-envtest@latest
+setup-envtest use 1.30.x --bin-dir ./envtest
+KUBEBUILDER_ASSETS=./envtest/k8s/1.30.3-<suite>-<arch> go run ./cmd/envtest-demo
+```
+
+It installs the CRD, creates a namespace with a 1-core budget, spins up two pods
+that overrun it, prints the `OverBudget` status + Event, deletes a pod, and
+prints the flip back to `WithinBudget`.
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
+
 ## License
 
 MIT
