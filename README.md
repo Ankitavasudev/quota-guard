@@ -64,6 +64,15 @@ If the budget gets exceeded you'll see an Event:
 quota-guard  Warning  OverBudget  pod requests (1500m CPU, 3.5Gi memory) exceed the budget (1500m CPU, 2Gi memory)
 ```
 
+## Install via Helm
+
+```bash
+helm install quota-guard ./deploy/helm/quota-guard \
+  --namespace quota-guard-system --create-namespace
+```
+
+Override values in `deploy/helm/quota-guard/values.yaml` (image tag, resources, replicas).
+
 ## CRD
 
 ```yaml

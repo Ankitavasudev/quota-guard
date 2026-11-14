@@ -1,0 +1,19 @@
+apiVersion: v2
+name: quota-guard
+description: A Kubernetes operator that watches per-namespace CPU and memory request budgets.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - kubernetes
+  - operator
+  - quota
+  - observability
+  - prometheus
+home: https://github.com/Ankitavasudev/quota-guard
+sources:
+  - https://github.com/Ankitavasudev/quota-guard
+maintainers:
+  - name: Ankita Salaria
+    url: https://github.com/Ankitavasudev
+license: MIT

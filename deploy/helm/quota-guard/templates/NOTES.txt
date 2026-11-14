@@ -1,0 +1,13 @@
+quota-guard has been deployed.
+
+1. Verify the operator is running:
+   kubectl get pods -n {{ .Values.namespace }}
+
+2. Create a ResourceBudget:
+   kubectl apply -f https://raw.githubusercontent.com/Ankitavasudev/quota-guard/main/config/samples/resourcebudget.yaml
+
+3. Watch status:
+   kubectl get resourcebudgets -A
+
+4. Metrics are exposed on port 8080:
+   kubectl port-forward -n {{ .Values.namespace }} svc/{{ include "quota-guard.fullname" . }}-metrics 8080:8080

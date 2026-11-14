@@ -1,0 +1,36 @@
+# Default values for quota-guard.
+replicaCount: 1
+
+image:
+  repository: ghcr.io/ankitavasudev/quota-guard
+  tag: latest
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+
+rbac:
+  create: true
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+metrics:
+  bindAddress: ":8080"
+
+health:
+  bindAddress: ":8081"
+
+namespace: quota-guard-system
+
+crd:
+  install: true
