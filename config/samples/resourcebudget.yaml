@@ -5,3 +5,6 @@ metadata:
 spec:
   cpu: "1500m"
   memory: "2Gi"
+  # Optional: storage (PVC) and ephemeral-storage budgets
+  # storage: "100Gi"
+  # ephemeralStorage: "10Gi"

@@ -100,6 +100,8 @@ Succeeded/failed pods are excluded; only Running pods count toward the budget.
 |---|---|---|
 | `quota_guard_cpu_request_millicores` | gauge | `namespace` |
 | `quota_guard_memory_request_bytes` | gauge | `namespace` |
+| `quota_guard_storage_request_bytes` | gauge | `namespace` |
+| `quota_guard_ephemeral_storage_request_bytes` | gauge | `namespace` |
 | `quota_guard_over_budget` | gauge | `namespace` (1/0) |
 
 ## Development
