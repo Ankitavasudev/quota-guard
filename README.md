@@ -153,6 +153,14 @@ prints the flip back to `WithinBudget`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
 
+## Adopters
+
+Using quota-guard in production? Open a PR to add your organization here.
+
+| Organization | Use case |
+|---|---|
+| _your org here_ | _e.g. namespace capacity governance_ |
+
 ## Troubleshooting
 
 - **Status shows `observedCpu: 0`** — pods may not have `resources.requests` set. quota-guard only counts requested resources.
