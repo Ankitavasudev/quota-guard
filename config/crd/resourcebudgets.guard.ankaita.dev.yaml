@@ -48,12 +48,22 @@ spec:
                 memory:
                   type: string
                   description: Aggregate memory request capacity for the namespace, e.g. "8Gi".
+                storage:
+                  type: string
+                  description: Aggregate storage (PVC) request capacity, e.g. "100Gi". Optional.
+                ephemeralStorage:
+                  type: string
+                  description: Aggregate ephemeral-storage request capacity, e.g. "10Gi". Optional.
             status:
               type: object
               properties:
                 observedCpu:
                   type: string
                 observedMemory:
+                  type: string
+                observedStorage:
+                  type: string
+                observedEphemeralStorage:
                   type: string
                 withinBudget:
                   type: boolean

@@ -31,6 +31,12 @@ type ResourceBudgetSpec struct {
 	// Memory is the aggregate memory request capacity, e.g. "8Gi".
 	// +kubebuilder:validation:Required
 	Memory string `json:"memory"`
+
+	// Storage is the aggregate storage (PVC) request capacity, e.g. "100Gi". Optional.
+	Storage string `json:"storage,omitempty"`
+
+	// EphemeralStorage is the aggregate ephemeral-storage request capacity, e.g. "10Gi". Optional.
+	EphemeralStorage string `json:"ephemeralStorage,omitempty"`
 }
 
 // ResourceBudgetStatus is the observed state.
@@ -40,6 +46,12 @@ type ResourceBudgetStatus struct {
 
 	// ObservedMemory is the sum of pod memory requests currently scheduled in the namespace.
 	ObservedMemory string `json:"observedMemory,omitempty"`
+
+	// ObservedStorage is the sum of pod storage requests currently scheduled in the namespace.
+	ObservedStorage string `json:"observedStorage,omitempty"`
+
+	// ObservedEphemeralStorage is the sum of pod ephemeral-storage requests currently scheduled.
+	ObservedEphemeralStorage string `json:"observedEphemeralStorage,omitempty"`
 
 	// WithinBudget is true when every pod fits inside the declared budget.
 	WithinBudget bool `json:"withinBudget"`

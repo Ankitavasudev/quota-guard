@@ -47,6 +47,14 @@ var (
 		Name: "quota_guard_memory_request_bytes",
 		Help: "Sum of pod memory requests in the namespace.",
 	}, []string{"namespace"})
+	storageRequestGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "quota_guard_storage_request_bytes",
+		Help: "Sum of pod storage requests in the namespace.",
+	}, []string{"namespace"})
+	ephemeralRequestGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "quota_guard_ephemeral_storage_request_bytes",
+		Help: "Sum of pod ephemeral-storage requests in the namespace.",
+	}, []string{"namespace"})
 	overBudgetGauge = prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name: "quota_guard_over_budget",
 		Help: "1 when the namespace exceeds its ResourceBudget, 0 otherwise.",
@@ -54,7 +62,7 @@ var (
 )
 
 func init() {
-	prometheus.MustRegister(cpuRequestGauge, memoryRequestGauge, overBudgetGauge)
+	prometheus.MustRegister(cpuRequestGauge, memoryRequestGauge, storageRequestGauge, ephemeralRequestGauge, overBudgetGauge)
 }
 
 // ResourceBudgetReconciler reconciles a ResourceBudget object.
@@ -106,11 +114,23 @@ func (r *ResourceBudgetReconciler) Reconcile(ctx context.Context, req reconcile.
 
 	var cpuBudget resource.Quantity
 	var memBudget resource.Quantity
+	var storageBudget resource.Quantity
+	var ephemeralBudget resource.Quantity
 	if q, err := resource.ParseQuantity(budget.Spec.CPU); err == nil {
 		cpuBudget = q
 	}
 	if q, err := resource.ParseQuantity(budget.Spec.Memory); err == nil {
 		memBudget = q
+	}
+	if budget.Spec.Storage != "" {
+		if q, err := resource.ParseQuantity(budget.Spec.Storage); err == nil {
+			storageBudget = q
+		}
+	}
+	if budget.Spec.EphemeralStorage != "" {
+		if q, err := resource.ParseQuantity(budget.Spec.EphemeralStorage); err == nil {
+			ephemeralBudget = q
+		}
 	}
 
 	pods := &corev1.PodList{}
@@ -119,6 +139,7 @@ func (r *ResourceBudgetReconciler) Reconcile(ctx context.Context, req reconcile.
 	}
 
 	var cpuUsed, memUsed int64
+	var storageUsed, ephemeralUsed int64
 	for _, pod := range pods.Items {
 		if pod.Status.Phase == corev1.PodSucceeded || pod.Status.Phase == corev1.PodFailed {
 			continue
@@ -126,19 +147,45 @@ func (r *ResourceBudgetReconciler) Reconcile(ctx context.Context, req reconcile.
 		for _, container := range pod.Spec.Containers {
 			cpuUsed += container.Resources.Requests.Cpu().MilliValue()
 			memUsed += container.Resources.Requests.Memory().Value()
+			if q, ok := container.Resources.Requests[corev1.ResourceStorage]; ok {
+				storageUsed += q.Value()
+			}
+			if q, ok := container.Resources.Requests[corev1.ResourceEphemeralStorage]; ok {
+				ephemeralUsed += q.Value()
+			}
 		}
 	}
 
 
 	overBudget := memUsed > memBudget.Value() || (cpuBudget.MilliValue() > 0 && cpuUsed > cpuBudget.MilliValue())
+	if storageBudget.Value() > 0 && storageUsed > storageBudget.Value() {
+		overBudget = true
+	}
+	if ephemeralBudget.Value() > 0 && ephemeralUsed > ephemeralBudget.Value() {
+		overBudget = true
+	}
 
 	status := budget.Status
 	status.ObservedCPU = resource.NewMilliQuantity(cpuUsed, resource.DecimalSI).String()
 	status.ObservedMemory = resource.NewQuantity(memUsed, resource.BinarySI).String()
+	if budget.Spec.Storage != "" {
+		status.ObservedStorage = resource.NewQuantity(storageUsed, resource.BinarySI).String()
+	}
+	if budget.Spec.EphemeralStorage != "" {
+		status.ObservedEphemeralStorage = resource.NewQuantity(ephemeralUsed, resource.BinarySI).String()
+	}
 	status.Pods = len(pods.Items)
 	status.WithinBudget = !overBudget
 	now := metav1.Now()
 	status.LastCalculated = &now
+
+	msg := fmt.Sprintf("pod requests (%dm CPU, %s memory) vs budget (%s CPU, %s memory)", cpuUsed, resource.NewQuantity(memUsed, resource.BinarySI).String(), budget.Spec.CPU, budget.Spec.Memory)
+	if budget.Spec.Storage != "" {
+		msg += fmt.Sprintf("; storage %s/%s", resource.NewQuantity(storageUsed, resource.BinarySI).String(), budget.Spec.Storage)
+	}
+	if budget.Spec.EphemeralStorage != "" {
+		msg += fmt.Sprintf("; ephemeral %s/%s", resource.NewQuantity(ephemeralUsed, resource.BinarySI).String(), budget.Spec.EphemeralStorage)
+	}
 
 	condition := metav1.Condition{
 		Type:               "WithinBudget",
@@ -146,12 +193,12 @@ func (r *ResourceBudgetReconciler) Reconcile(ctx context.Context, req reconcile.
 		ObservedGeneration: budget.Generation,
 		LastTransitionTime: now,
 		Reason:             "WithinBudget",
-		Message:            fmt.Sprintf("pod requests (%dm CPU, %s memory) fit the budget (%s CPU, %s memory)", cpuUsed, resource.NewQuantity(memUsed, resource.BinarySI).String(), budget.Spec.CPU, budget.Spec.Memory),
+		Message:            "within budget: " + msg,
 	}
 	if overBudget {
 		condition.Status = metav1.ConditionFalse
 		condition.Reason = "OverBudget"
-		condition.Message = fmt.Sprintf("pod requests (%dm CPU, %s memory) exceed the budget (%s CPU, %s memory)", cpuUsed, resource.NewQuantity(memUsed, resource.BinarySI).String(), budget.Spec.CPU, budget.Spec.Memory)
+		condition.Message = "over budget: " + msg
 	}
 	apimeta.SetStatusCondition(&status.Conditions, condition)
 	budget.Status = status
@@ -163,6 +210,8 @@ func (r *ResourceBudgetReconciler) Reconcile(ctx context.Context, req reconcile.
 
 	cpuRequestGauge.WithLabelValues(req.Namespace).Set(float64(cpuUsed))
 	memoryRequestGauge.WithLabelValues(req.Namespace).Set(float64(memUsed))
+	storageRequestGauge.WithLabelValues(req.Namespace).Set(float64(storageUsed))
+	ephemeralRequestGauge.WithLabelValues(req.Namespace).Set(float64(ephemeralUsed))
 	if overBudget {
 		overBudgetGauge.WithLabelValues(req.Namespace).Set(1)
 		r.Recorder.Event(budget, corev1.EventTypeWarning, "OverBudget", condition.Message)
@@ -177,5 +226,7 @@ func (r *ResourceBudgetReconciler) Reconcile(ctx context.Context, req reconcile.
 func deleteGauges(namespace string) {
 	cpuRequestGauge.DeleteLabelValues(namespace)
 	memoryRequestGauge.DeleteLabelValues(namespace)
+	storageRequestGauge.DeleteLabelValues(namespace)
+	ephemeralRequestGauge.DeleteLabelValues(namespace)
 	overBudgetGauge.DeleteLabelValues(namespace)
 }
