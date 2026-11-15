@@ -1,0 +1,25 @@
+name: Daily Commit (keep streak alive)
+
+on:
+  schedule:
+    - cron: "0 0 * * *"  # daily at 00:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Update daily log
+        run: |
+          mkdir -p .github/daily
+          echo "$(date -u +%Y-%m-%d) - daily check-in" >> .github/daily/log.md
+          git config user.name "Ankitavasudev"
+          git config user.email "ankitasalaria21@gmail.com"
+          git add .github/daily/log.md
+          git diff --cached --quiet || git commit -m "chore: daily check-in $(date -u +%Y-%m-%d)"
+          git push
