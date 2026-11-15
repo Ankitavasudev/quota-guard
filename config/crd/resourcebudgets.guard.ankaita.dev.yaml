@@ -24,6 +24,12 @@ spec:
         - name: Memory used
           type: string
           jsonPath: .status.observedMemory
+        - name: Storage used
+          type: string
+          jsonPath: .status.observedStorage
+        - name: Ephemeral used
+          type: string
+          jsonPath: .status.observedEphemeralStorage
         - name: Pods
           type: integer
           jsonPath: .status.pods
