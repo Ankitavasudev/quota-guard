@@ -26,7 +26,13 @@ jobs:
         run: go vet ./...
 
       - name: Test
-        run: go test ./... -count=1 -race
+        run: go test ./... -count=1 -race -coverprofile=coverage.out -covermode=atomic
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage.out
+          fail_ci_if_error: false
 
       - name: Build
         run: CGO_ENABLED=0 go build -o /tmp/quota-guard ./cmd/quota-guard

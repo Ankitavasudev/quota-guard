@@ -4,7 +4,7 @@ A Kubernetes operator that watches per-namespace CPU and memory **request budget
 
 Declare one `ResourceBudget` per namespace, and quota-guard continuously sums the pod requests scheduled there, writes the result back into the CR's status, emits a Kubernetes event and Prometheus metrics, and flips a `WithinBudget` condition — so a namespace that quietly outgrows its budget is visible in `kubectl get rb`, not in a surprise bill.
 
-![CI](https://github.com/Ankitavasudev/quota-guard/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/Ankitavasudev/quota-guard/actions/workflows/ci.yml/badge.svg) ![codecov](https://codecov.io/gh/Ankitavasudev/quota-guard/branch/main/graph/badge.svg)
 ![Go](https://img.shields.io/badge/go-1.25-00ADD8?logo=go&logoColor=white)
 ![license](https://img.shields.io/badge/license-MIT-green)
 
