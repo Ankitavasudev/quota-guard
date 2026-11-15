@@ -20,18 +20,16 @@ It deliberately does **not** block scheduling — that's what ResourceQuota and 
 
 ## Architecture
 
+```mermaid
+flowchart LR
+  RB[ResourceBudget CR] -->|watches| OP[quota-guard operator]
+  PODS[core/v1 Pods] -->|watches| OP
+  OP -->|reconcile| SUM[sum requests]
+  SUM --> STATUS[CR status + conditions]
+  SUM --> EVENT[K8s Event]
+  SUM --> METRICS[Prometheus gauges]
 ```
-┌─────────────────────┐        watches        ┌────────────────────────┐
-│  ResourceBudget CR  │ ───────────────────►  │  quota-guard operator  │
-│  (per namespace)    │                       │                        │
-└─────────────────────┘                       │  reconcile loop:       │
-                                                │  1. list pods          │
-┌─────────────────────┐        watches        │  2. sum requests       │
-│  core/v1 Pods        │ ───────────────────►  │  3. compare w/ budget  │
-└─────────────────────┘                        │  4. write status       │
-                                                │  5. emit Event + metrics│
-                                                └────────────────────────┘
-```
+
 
 Built with [controller-runtime](https://github.com/kubernetes-sigs/controller-runtime): one reconciler, a predicate filter on Pod events, and a manager with a metrics endpoint and health probes.
 
@@ -154,6 +152,13 @@ prints the flip back to `WithinBudget`.
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). Issues and PRs welcome.
+
+## Troubleshooting
+
+- **Status shows `observedCpu: 0`** — pods may not have `resources.requests` set. quota-guard only counts requested resources.
+- **`WithinBudget` stuck `false`** — check `kubectl describe rb <name>` for the condition message; usually a single pod exceeds the budget.
+- **No metrics on `:8080`** — ensure the Service targets port 8080 and the pod is ready (`kubectl get pods`).
+- **CRD not found after install** — run `make deploy` or `kubectl apply -f config/crd/`.
 
 ## License
 
